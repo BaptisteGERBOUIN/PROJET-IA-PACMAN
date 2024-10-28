@@ -53,62 +53,147 @@ class MultiAgentSearchAgent(Agent):
 
 class MinimaxAgent(MultiAgentSearchAgent):
     """
-    Your minimax agent (question 2)
+    Votre agent minimax (question 2)
     """
 
     def getAction(self, state: GameState):
         """
-        Returns the minimax action from the current gameState using self.depth
-        and self.evaluationFunction.
-
-        Here are some method calls that might be useful when implementing minimax.
-
-        gameState.getLegalActions(agentIndex):
-        Returns a list of legal actions for an agent
-        agentIndex=0 means Pacman, ghosts are >= 1
-
-        gameState.getNextState(agentIndex, action):
-        Returns the child game state after an agent takes an action
-
-        gameState.getNumAgents():
-        Returns the total number of agents in the game
-
-        gameState.isWin():
-        Returns whether or not the game state is a winning state
-
-        gameState.isLose():
-        Returns whether or not the game state is a losing state
+        Retourne l'action minimax à partir de l'état actuel du jeu en utilisant self.depth
+        et self.evaluationFunction.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def minimax(agentIndex, depth, gameState):
+            # Conditions de fin : victoire, défaite ou profondeur maximale atteinte
+            if gameState.isWin() or gameState.isLose() or depth == self.depth:
+                return self.evaluationFunction(gameState)
+
+            # Si l'agent est Pacman (Maximisation)
+            if agentIndex == 0:
+                return max(minimax(1, depth, gameState.getNextState(agentIndex, action))
+                           for action in gameState.getLegalActions(agentIndex))
+
+            # Si l'agent est un fantôme (Minimisation)
+            else:
+                nextAgent = agentIndex + 1  # prochain fantôme
+                if nextAgent == gameState.getNumAgents():  # si dernier agent, reset to Pacman
+                    nextAgent, depth = 0, depth + 1  # Pacman et +1 profondeur
+                return min(minimax(nextAgent, depth, gameState.getNextState(agentIndex, action))
+                           for action in gameState.getLegalActions(agentIndex))
+
+        # Retourne l'action avec la valeur minimax maximale pour Pacman
+        legalMoves = state.getLegalActions(0)
+        bestAction = max(legalMoves, key=lambda action: minimax(1, 0, state.getNextState(0, action)))
+        return bestAction
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
     Your minimax agent with alpha-beta pruning (question 3)
     """
 
+class AlphaBetaAgent(MultiAgentSearchAgent):
+    """
+    Votre agent minimax avec élagage alpha-bêta (question 3)
+    """
+
     def getAction(self, state: GameState):
         """
-        Returns the minimax action using self.depth and self.evaluationFunction
+        Retourne l'action minimax avec élagage alpha-bêta en utilisant self.depth et self.evaluationFunction.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def alpha_beta(agentIndex, depth, gameState, alpha, beta):
+            # Conditions de fin : victoire, défaite, ou profondeur maximale atteinte
+            if gameState.isWin() or gameState.isLose() or depth == self.depth:
+                return self.evaluationFunction(gameState)
+
+            # Pacman joue (Maximisation)
+            if agentIndex == 0:
+                maxEval = float('-inf')
+                for action in gameState.getLegalActions(agentIndex):
+                    evalValue = alpha_beta(1, depth, gameState.getNextState(agentIndex, action), alpha, beta)
+                    maxEval = max(maxEval, evalValue)
+                    alpha = max(alpha, evalValue)
+                    if beta <= alpha:  # Élagage beta
+                        break
+                return maxEval
+
+            # Fantômes jouent (Minimisation)
+            else:
+                minEval = float('inf')
+                nextAgent = agentIndex + 1  # prochain fantôme
+                if nextAgent == gameState.getNumAgents():  # si dernier agent, revient à Pacman
+                    nextAgent, depth = 0, depth + 1
+                for action in gameState.getLegalActions(agentIndex):
+                    evalValue = alpha_beta(nextAgent, depth, gameState.getNextState(agentIndex, action), alpha, beta)
+                    minEval = min(minEval, evalValue)
+                    beta = min(beta, evalValue)
+                    if beta <= alpha:  # Élagage alpha
+                        break
+                return minEval
+
+        # Obtenir l'action avec la valeur minimax optimisée pour Pacman
+        legalMoves = state.getLegalActions(0)
+        bestAction = None
+        alpha, beta = float('-inf'), float('inf')
+        maxEval = float('-inf')
+
+        for action in legalMoves:
+            evalValue = alpha_beta(1, 0, state.getNextState(0, action), alpha, beta)
+            if evalValue > maxEval:
+                maxEval = evalValue
+                bestAction = action
+            alpha = max(alpha, evalValue)
+
+        return bestAction
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
-      Your expectimax agent (question 4)
+    Votre agent Expectimax (question 4)
     """
 
     def getAction(self, state: GameState):
         """
-        Returns the expectimax action using self.depth and self.evaluationFunction
-
-        All ghosts should be modeled as choosing uniformly at random from their
-        legal moves.
+        Retourne l'action expectimax en utilisant self.depth et self.evaluationFunction
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
 
+        def expectimax(agentIndex, depth, gameState):
+            # Conditions de fin : victoire, défaite, ou profondeur maximale atteinte
+            if gameState.isWin() or gameState.isLose() or depth == self.depth:
+                return self.evaluationFunction(gameState)
+
+            # Pacman joue (Maximisation)
+            if agentIndex == 0:
+                maxEval = float('-inf')
+                for action in gameState.getLegalActions(agentIndex):
+                    evalValue = expectimax(1, depth, gameState.getNextState(agentIndex, action))
+                    maxEval = max(maxEval, evalValue)
+                return maxEval
+
+            # Les fantômes jouent (Valeur moyenne des résultats possibles)
+            else:
+                totalValue = 0
+                actions = gameState.getLegalActions(agentIndex)
+                probability = 1 / len(actions)  # probabilité uniforme
+                nextAgent = agentIndex + 1  # prochain agent
+                if nextAgent == gameState.getNumAgents():  # si dernier agent, revient à Pacman
+                    nextAgent, depth = 0, depth + 1
+
+                for action in actions:
+                    evalValue = expectimax(nextAgent, depth, gameState.getNextState(agentIndex, action))
+                    totalValue += evalValue * probability
+
+                return totalValue
+
+        # Obtenir l'action avec la valeur maximisée pour Pacman
+        legalMoves = state.getLegalActions(0)
+        bestAction = None
+        maxEval = float('-inf')
+
+        for action in legalMoves:
+            evalValue = expectimax(1, 0, state.getNextState(0, action))
+            if evalValue > maxEval:
+                maxEval = evalValue
+                bestAction = action
+
+        return bestAction
+    
 def betterEvaluationFunction(state: GameState):
     """
     Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
