@@ -196,13 +196,54 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
     
 def betterEvaluationFunction(state: GameState):
     """
-    Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
-    evaluation function (question 5).
-
-    DESCRIPTION: <write something here so we know what you did>
+    Évaluation améliorée pour Pacman.
+    
+    Prend en compte plusieurs facteurs de l'état du jeu :
+    - Distance de la nourriture la plus proche
+    - Distance aux fantômes (et leur état "effrayé")
+    - Présence de capsules de puissance
+    - Score de base de l'état actuel
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()    
+    # Score de base de l'état actuel
+    score = state.getScore()
+    
+    # Position de Pacman et de la nourriture
+    pacmanPos = state.getPacmanPosition()
+    foodList = state.getFood().asList()
+    
+    # Distance à la nourriture la plus proche
+    if foodList:
+        closestFoodDist = min(util.manhattanDistance(pacmanPos, foodPos) for foodPos in foodList)
+        foodScore = 1 / (closestFoodDist + 1)  # Plus la nourriture est proche, meilleur est le score
+    else:
+        foodScore = 0  # Plus de nourriture à manger
+    
+    # Distance aux capsules
+    capsuleList = state.getCapsules()
+    if capsuleList:
+        closestCapsuleDist = min(util.manhattanDistance(pacmanPos, capsulePos) for capsulePos in capsuleList)
+        capsuleScore = 1 / (closestCapsuleDist + 1)
+    else:
+        capsuleScore = 0
+
+    # Distance aux fantômes et état "effrayé"
+    ghostStates = state.getGhostStates()
+    ghostScore = 0
+    for ghost in ghostStates:
+        ghostPos = ghost.getPosition()
+        ghostDist = util.manhattanDistance(pacmanPos, ghostPos)
+        
+        if ghost.scaredTimer > 0:  # Fantôme effrayé
+            ghostScore += 10 / (ghostDist + 1)  # Encourage Pacman à se rapprocher des fantômes effrayés
+        else:  # Fantôme normal
+            if ghostDist > 0:
+                ghostScore -= 10 / ghostDist  # Pacman doit éviter les fantômes proches
+
+    # Pondération des scores
+    totalScore = score + foodScore * 10 + capsuleScore * 5 + ghostScore
+
+    return totalScore
+
 
 # Abbreviation
 better = betterEvaluationFunction
