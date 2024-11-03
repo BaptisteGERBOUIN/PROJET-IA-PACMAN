@@ -102,7 +102,48 @@ def joinFactors(factors):
 
 
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    #on crée un une liste pour les variables inconditionnées et conditionées
+    totalUnconditionedVariables = []
+    totalConditionedVariables = []
+    variablesToDomain = {}
+
+#En parcourant les facteurs on ajoute à notre liste toutes les variables inconditionnées différentes.
+    for factor in factors:
+        for unconditioned in factor.unconditionedVariables():
+            if unconditioned not in totalUnconditionedVariables:
+                totalUnconditionedVariables.append(unconditioned)
+                variablesToDomain[unconditioned] = factor.variableDomainsDict()[unconditioned]
+    #print(totalUnconditionedVariables)
+    #print(variablesToDomain)
+
+
+#En parcourant les facteurs on ajoute à notre liste toutes les variables conditionnées différentes.
+    for factor in factors:
+        for conditioned in factor.conditionedVariables():
+            if conditioned not in totalUnconditionedVariables and conditioned not in totalConditionedVariables:
+                totalConditionedVariables.append(conditioned)
+                variablesToDomain[conditioned] = factor.variableDomainsDict()[conditioned]
+
+    newFactor = Factor(totalUnconditionedVariables.copy(), totalConditionedVariables.copy(), variablesToDomain)
+
+    for assigment in newFactor.getAllPossibleAssignmentDicts():
+        newFactor.setProbability(assigment, float(1.0))
+
+    for factor in factors:
+        a = newFactor.getAllPossibleAssignmentDicts()
+        for assigment in a:
+            for factorAssigment in factor.getAllPossibleAssignmentDicts():
+                proba = factor.getProbability(factorAssigment)
+                works = True
+                for var in factorAssigment.keys():
+                    if factorAssigment[var] != assigment[var]:
+                        works = False
+                        break
+                if works:
+                    newFactor.setProbability(assigment, newFactor.getProbability(assigment) * proba)
+                    break
+
+    return newFactor
     "*** END YOUR CODE HERE ***"
 
 

@@ -153,11 +153,22 @@ def fillYCPT(bayesNet, gameState):
     probabilities down by hand.
     """
 
-    yFactor = bn.Factor([Y_POS_VAR], [], bayesNet.variableDomainsDict())
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
-    "*** END YOUR CODE HERE ***"
+    from layout import PROB_BOTH_TOP, PROB_BOTH_BOTTOM, PROB_ONLY_LEFT_TOP, PROB_ONLY_LEFT_BOTTOM
+
+    # Créer le facteur pour Y_POS_VAR
+    yFactor = bn.Factor([Y_POS_VAR], [], bayesNet.variableDomainsDict())
+
+    # Définir les probabilités pour chaque position de Y
+    yFactor.setProbability({Y_POS_VAR: BOTH_TOP_VAL}, PROB_BOTH_TOP)
+    yFactor.setProbability({Y_POS_VAR: BOTH_BOTTOM_VAL}, PROB_BOTH_BOTTOM)
+    yFactor.setProbability({Y_POS_VAR: LEFT_TOP_VAL}, PROB_ONLY_LEFT_TOP)
+    yFactor.setProbability({Y_POS_VAR: LEFT_BOTTOM_VAL}, PROB_ONLY_LEFT_BOTTOM)
+
+    # Associer le facteur à Y_POS_VAR dans le réseau bayésien
     bayesNet.setCPT(Y_POS_VAR, yFactor)
+    "*** END YOUR CODE HERE ***"
+
 
 def fillHouseCPT(bayesNet, gameState):
     foodHouseFactor = bn.Factor([FOOD_HOUSE_VAR], [X_POS_VAR, Y_POS_VAR], bayesNet.variableDomainsDict())
